@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
-import io
 
 app = FastAPI()
 
@@ -32,9 +31,7 @@ def intersect_and_annotate(data_csv: pd.DataFrame, enrichment_csv: pd.DataFrame)
 
 def get_csv_data(csv_path: str) -> pd.DataFrame:
     try:
-        with open(csv_path) as data_file:
-            data = data_file.read()
-            return pd.read_csv(io.StringIO(data))
+        return pd.read_csv(csv_path)
     except FileNotFoundError:
         raise FileNotFoundError
     except Exception:
