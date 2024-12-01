@@ -1,6 +1,9 @@
+import os.path
+
+import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
-import pandas as pd
+from starlette.responses import JSONResponse
 
 app = FastAPI()
 
@@ -29,19 +32,16 @@ def intersect_and_annotate(data_csv: pd.DataFrame, enrichment_csv: pd.DataFrame)
     return enriched_data
 
 
-def get_csv_data(csv_path: str) -> pd.DataFrame:
-    try:
-        return pd.read_csv(csv_path)
-    except FileNotFoundError:
-        raise FileNotFoundError
-    except Exception:
-        raise Exception("Unexpected error opening {csv_path}")
-
-
 @app.post("/enrich_csvs")
 async def enrich_csvs(request: EnrichRequest):
-    data_df = get_csv_data(request.data_csv)
-    enrichment_df = get_csv_data(request.enrichment_csv)
+    if not os.path.exists(request.data_csv):
+        return JSONResponse({"error": "Data_csv does not exist."}, status_code=400)
+
+    if not os.path.exists(request.enrichment_csv):
+        return JSONResponse({"error": "Enrichment_csv does not exist."}, status_code=400)
+
+    data_df = pd.read_csv(request.data_csv)
+    enrichment_df = pd.read_csv(request.enrichment_csv)
 
     enriched_data = intersect_and_annotate(data_df, enrichment_df)
     enriched_data_notnull = enriched_data.where(pd.notnull(enriched_data), None)
